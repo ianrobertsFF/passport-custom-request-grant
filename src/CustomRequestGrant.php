@@ -12,6 +12,7 @@ use League\OAuth2\Server\Repositories\UserRepositoryInterface;
 use League\OAuth2\Server\RequestEvent;
 use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Laravel\Passport\Client;
 
 class CustomRequestGrant extends AbstractGrant
 {
@@ -96,7 +97,11 @@ class CustomRequestGrant extends AbstractGrant
      */
     protected function getUserEntityByRequest(Request $request)
     {
-        if (is_null($model = config('auth.providers.users.model'))) {
+        if ($request->input("client_id")) {
+            $provider = Client::find($request->input("client_id"))->provider;
+        }
+        $provider ??= config('auth.guards.api.provider', 'users');
+        if (is_null($model = config("auth.providers.{$provider}.model"))) {
             throw OAuthServerException::serverError('Unable to determine user model from configuration.');
         }
 
